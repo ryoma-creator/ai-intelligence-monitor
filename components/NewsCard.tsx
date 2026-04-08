@@ -1,16 +1,15 @@
 'use client';
 
-// ニュースカードコンポーネント
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { NewsItem } from '@/types';
+import { NewsItem, Language } from '@/types';
 
 interface Props {
   item: NewsItem;
   index: number;
+  lang: Language;
 }
 
-// スコアに応じた色クラス
 function scoreStyle(score: number): { bg: string; text: string; ring: string } {
   if (score >= 9) return { bg: 'bg-rose-500', text: 'text-white', ring: 'ring-rose-200' };
   if (score >= 8) return { bg: 'bg-orange-500', text: 'text-white', ring: 'ring-orange-200' };
@@ -18,7 +17,6 @@ function scoreStyle(score: number): { bg: string; text: string; ring: string } {
   return { bg: 'bg-slate-200', text: 'text-slate-600', ring: 'ring-slate-200' };
 }
 
-// ソースごとのアクセントカラー
 function sourceAccent(sourceName: string): string {
   if (sourceName.includes('OpenAI')) return 'text-emerald-600';
   if (sourceName.includes('Anthropic')) return 'text-orange-500';
@@ -29,15 +27,18 @@ function sourceAccent(sourceName: string): string {
   return 'text-slate-500';
 }
 
-function relativeTime(isoString: string): string {
-  const diff = Date.now() - new Date(isoString).getTime();
-  const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return '1時間以内';
-  if (hours < 24) return `${hours}時間前`;
-  return `${Math.floor(hours / 24)}日前`;
+// Intl.RelativeTimeFormat で言語に対応した相対時刻
+function relativeTime(isoString: string, lang: Language): string {
+  const rtf = new Intl.RelativeTimeFormat(lang === 'ja' ? 'ja' : 'en', { numeric: 'auto' });
+  const diffMs = new Date(isoString).getTime() - Date.now();
+  const diffHours = Math.round(diffMs / 3600000);
+  const diffDays = Math.round(diffMs / 86400000);
+
+  if (Math.abs(diffHours) < 24) return rtf.format(diffHours, 'hour');
+  return rtf.format(diffDays, 'day');
 }
 
-export function NewsCard({ item, index }: Props) {
+export function NewsCard({ item, index, lang }: Props) {
   const [expanded, setExpanded] = useState(false);
   const style = scoreStyle(item.score);
 
@@ -46,7 +47,7 @@ export function NewsCard({ item, index }: Props) {
       className="group flex gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-slate-200 hover:shadow-md"
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* スコアバッジ */}
+      {/* Score badge */}
       <div className="flex flex-col items-center gap-1 pt-0.5">
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-2 ${style.bg} ${style.text} ${style.ring}`}
@@ -56,18 +57,18 @@ export function NewsCard({ item, index }: Props) {
         <span className="text-[10px] font-medium text-slate-400">/ 10</span>
       </div>
 
-      {/* コンテンツ */}
+      {/* Content */}
       <div className="min-w-0 flex-1">
-        {/* ソース + 時刻 */}
+        {/* Source + time */}
         <div className="mb-1.5 flex items-center gap-1.5 text-xs">
           <span className={`font-semibold ${sourceAccent(item.sourceName)}`}>
             {item.sourceName}
           </span>
           <span className="text-slate-300">·</span>
-          <span className="text-slate-400">{relativeTime(item.publishedAt)}</span>
+          <span className="text-slate-400">{relativeTime(item.publishedAt, lang)}</span>
         </div>
 
-        {/* タイトル */}
+        {/* Title */}
         <a
           href={item.url}
           target="_blank"
@@ -77,10 +78,8 @@ export function NewsCard({ item, index }: Props) {
           {item.title}
         </a>
 
-        {/* 要約 */}
-        <p
-          className={`mb-3 text-xs leading-relaxed text-slate-600 ${expanded ? '' : 'line-clamp-2'}`}
-        >
+        {/* Summary */}
+        <p className={`mb-3 text-xs leading-relaxed text-slate-600 ${expanded ? '' : 'line-clamp-2'}`}>
           {item.summary}
         </p>
 
@@ -90,11 +89,13 @@ export function NewsCard({ item, index }: Props) {
             onClick={() => setExpanded((v) => !v)}
             className="mb-2 text-[11px] font-medium text-slate-400 hover:text-slate-600 transition-colors"
           >
-            {expanded ? 'Show less ▲' : 'Read more ▼'}
+            {expanded
+              ? (lang === 'ja' ? '閉じる ▲' : 'Show less ▲')
+              : (lang === 'ja' ? '続きを読む ▼' : 'Read more ▼')}
           </button>
         )}
 
-        {/* タグ */}
+        {/* Tags */}
         <div className="flex flex-wrap gap-1.5">
           {item.tags.map((tag) => (
             <Badge key={tag} variant="outline" className="h-auto rounded-full px-2 py-0.5 text-[11px] text-slate-500">
@@ -104,14 +105,14 @@ export function NewsCard({ item, index }: Props) {
         </div>
       </div>
 
-      {/* 外部リンクアイコン */}
+      {/* External link icon */}
       <div className="shrink-0 pt-0.5">
         <a
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
           className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-slate-100 hover:text-slate-600"
-          aria-label="記事を開く"
+          aria-label="Open article"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
