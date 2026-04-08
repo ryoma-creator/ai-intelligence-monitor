@@ -152,16 +152,16 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="mx-auto max-w-3xl px-4 py-6">
+        <div className="mx-auto max-w-6xl px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="mb-1 flex items-center gap-2">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-lg">
+              <div className="mb-1 flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/10 text-xl">
                   ⚡
                 </div>
-                <h1 className="text-lg font-bold tracking-tight">AI Intelligence Monitor</h1>
+                <h1 className="text-xl font-bold tracking-tight md:text-2xl">AI Intelligence Monitor</h1>
               </div>
-              <p className="text-sm text-slate-400">{t.pipeline}</p>
+              <p className="text-sm text-slate-400 md:text-base">{t.pipeline}</p>
             </div>
 
             <div className="flex flex-col items-stretch gap-3 sm:items-end">
@@ -214,7 +214,7 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
+      <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
         {/* Error */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -254,8 +254,8 @@ export default function Home() {
 
         {/* Skeleton loading */}
         {loading && (
-          <div className="space-y-3">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {[...Array(6)].map((_, i) => (
               <div key={i} className="flex gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-200" />
                 <div className="flex-1 space-y-2">
@@ -270,7 +270,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            <p className="text-center text-xs text-slate-400 pt-2 animate-pulse">
+            <p className="col-span-full text-center text-xs text-slate-400 pt-2 animate-pulse">
               Collecting and summarizing articles...
             </p>
           </div>
@@ -318,13 +318,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* News list */}
-            <div className="space-y-3">
+            {/* News list — 1 col on mobile, 2 col on desktop */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {filtered.map((item, i) => (
                 <NewsCard key={item.id} item={item} index={i} lang={lang} />
               ))}
               {filtered.length === 0 && (
-                <div className="rounded-xl border border-slate-100 bg-white py-12 text-center text-sm text-slate-400 shadow-sm">
+                <div className="col-span-full rounded-xl border border-slate-100 bg-white py-12 text-center text-sm text-slate-400 shadow-sm">
                   No articles match the current filters
                 </div>
               )}

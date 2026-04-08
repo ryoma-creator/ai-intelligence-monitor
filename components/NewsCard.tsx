@@ -73,13 +73,13 @@ export function NewsCard({ item, index, lang }: Props) {
           href={item.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mb-2 block text-sm font-semibold leading-snug text-slate-900 line-clamp-2 hover:text-blue-600 transition-colors"
+          className="mb-2 block text-sm font-semibold leading-snug text-slate-900 line-clamp-2 hover:text-blue-600 transition-colors md:text-base"
         >
           {item.title}
         </a>
 
         {/* Summary */}
-        <p className={`mb-3 text-xs leading-relaxed text-slate-600 ${expanded ? '' : 'line-clamp-2'}`}>
+        <p className={`mb-3 text-xs leading-relaxed text-slate-600 md:text-sm ${expanded ? '' : 'line-clamp-3'}`}>
           {item.summary}
         </p>
 
