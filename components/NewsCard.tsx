@@ -84,13 +84,13 @@ export function NewsCard({ item, index }: Props) {
           {item.summary}
         </p>
 
-        {/* 展開ボタン（要約が長い場合） */}
+        {/* Expand toggle */}
         {item.summary.length > 80 && (
           <button
             onClick={() => setExpanded((v) => !v)}
             className="mb-2 text-[11px] font-medium text-slate-400 hover:text-slate-600 transition-colors"
           >
-            {expanded ? '閉じる ▲' : '続きを読む ▼'}
+            {expanded ? 'Show less ▲' : 'Read more ▼'}
           </button>
         )}
 

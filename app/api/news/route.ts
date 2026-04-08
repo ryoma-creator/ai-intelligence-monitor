@@ -1,50 +1,47 @@
-// ニュース収集 + AI要約 API
-import { NextResponse } from 'next/server';
+// News collection + AI summarization API
+import { NextRequest, NextResponse } from 'next/server';
 import { fetchRssArticles } from '@/lib/rss';
 import { fetchHNArticles } from '@/lib/hackernews';
 import { summarizeArticles } from '@/lib/summarizer';
-import { MOCK_NEWS } from '@/lib/mockData';
-import { NewsItem } from '@/types';
+import { getMockNews } from '@/lib/mockData';
+import { NewsItem, Language } from '@/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const lang = (req.nextUrl.searchParams.get('lang') ?? 'en') as Language;
+  const validLangs: Language[] = ['en', 'ja'];
+  const resolvedLang: Language = validLangs.includes(lang) ? lang : 'en';
+
   try {
-    // 並列でソース取得
+    // Fetch sources in parallel
     const [rssArticles, hnArticles] = await Promise.all([
       fetchRssArticles().catch(() => []),
       fetchHNArticles().catch(() => []),
     ]);
 
-    const totalArticles = rssArticles.length + hnArticles.length;
-
-    // 記事が1件も取得できなかった場合はモックデータを返す
-    if (totalArticles === 0) {
-      const sorted = [...MOCK_NEWS].sort((a, b) => b.score - a.score);
+    // Fall back to mock data when no articles were fetched
+    if (rssArticles.length + hnArticles.length === 0) {
       return NextResponse.json({
-        news: sorted,
+        news: getMockNews(resolvedLang),
         fetchedAt: new Date().toISOString(),
         isMock: true,
       });
     }
 
-    // 並列でAI要約
+    // Summarize in parallel with the requested language
     const [rssNews, hnNews] = await Promise.all([
-      rssArticles.length > 0 ? summarizeArticles(rssArticles, 'rss') : [],
-      hnArticles.length > 0 ? summarizeArticles(hnArticles, 'hackernews') : [],
+      rssArticles.length > 0 ? summarizeArticles(rssArticles, 'rss', resolvedLang) : [],
+      hnArticles.length > 0 ? summarizeArticles(hnArticles, 'hackernews', resolvedLang) : [],
     ]);
 
-    // マージしてスコア順にソート
-    const allNews: NewsItem[] = [...rssNews, ...hnNews].sort(
-      (a, b) => b.score - a.score
-    );
+    const allNews: NewsItem[] = [...rssNews, ...hnNews].sort((a, b) => b.score - a.score);
 
-    // 要約結果が空なら（OpenAI API失敗等）モックにフォールバック
+    // If summarization produced nothing (e.g. OpenAI API failure) use mock
     if (allNews.length === 0) {
-      const sorted = [...MOCK_NEWS].sort((a, b) => b.score - a.score);
       return NextResponse.json({
-        news: sorted,
+        news: getMockNews(resolvedLang),
         fetchedAt: new Date().toISOString(),
         isMock: true,
       });
@@ -56,13 +53,9 @@ export async function GET() {
       isMock: false,
     });
   } catch (err) {
-    // 予期しないエラー時もモックで返す
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[api/news]', message);
-
-    const sorted = [...MOCK_NEWS].sort((a, b) => b.score - a.score);
+    console.error('[api/news]', err instanceof Error ? err.message : err);
     return NextResponse.json({
-      news: sorted,
+      news: getMockNews(resolvedLang),
       fetchedAt: new Date().toISOString(),
       isMock: true,
     });
