@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { NewsCard } from '@/components/NewsCard';
 import { NewsItem, FilterSource, FilterScore, Language } from '@/types';
 
@@ -100,7 +100,12 @@ function FilterBtn({
   );
 }
 
+type CacheEntry = { news: NewsItem[]; fetchedAt: string; isMock: boolean };
+
 export default function Home() {
+  // EN/JA それぞれ初回のみフェッチ、以降はキャッシュを使う（再レンダリング不要なのでuseRef）
+  const cacheRef = useRef<Partial<Record<Language, CacheEntry>>>({});
+  const cache = cacheRef.current;
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<string | null>(null);
@@ -110,13 +115,22 @@ export default function Home() {
   const [filterScore, setFilterScore] = useState<FilterScore>('all');
   const [lang, setLang] = useState<Language>('en');
 
-  const fetchNews = useCallback(async (targetLang: Language) => {
+  const fetchNews = useCallback(async (targetLang: Language, forceRefresh = false) => {
+    // キャッシュがあれば再フェッチしない
+    if (!forceRefresh && cache[targetLang]) {
+      const cached = cache[targetLang]!;
+      setNews(cached.news);
+      setFetchedAt(cached.fetchedAt);
+      setIsMock(cached.isMock);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await fetch(`/api/news?lang=${targetLang}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json() as ApiResponse;
+      cache[targetLang] = { news: data.news, fetchedAt: data.fetchedAt, isMock: data.isMock ?? false };
       setNews(data.news);
       setFetchedAt(data.fetchedAt);
       setIsMock(data.isMock ?? false);
@@ -125,14 +139,18 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cache]);
 
-  const handleRefresh = () => fetchNews(lang);
+  // Refresh ボタン: 強制再フェッチ（キャッシュ破棄）
+  const handleRefresh = () => {
+    delete cache[lang];
+    fetchNews(lang, true);
+  };
 
+  // 言語切り替え: キャッシュがあれば即切り替え、なければフェッチ
   const handleLangSwitch = (next: Language) => {
     setLang(next);
-    // Re-fetch only if results are already displayed
-    if (news.length > 0) fetchNews(next);
+    if (news.length > 0 || cache[next]) fetchNews(next);
   };
 
   const filtered = news.filter((item) => {
@@ -152,7 +170,7 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="mx-auto max-w-6xl px-6 py-6">
+        <div className="mx-auto max-w-4xl px-6 py-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <div className="mb-1 flex items-center gap-2.5">
@@ -214,7 +232,7 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="mx-auto max-w-6xl space-y-5 px-6 py-6">
+      <main className="mx-auto max-w-4xl space-y-5 px-6 py-6">
         {/* Error */}
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -254,8 +272,8 @@ export default function Home() {
 
         {/* Skeleton loading */}
         {loading && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {[...Array(6)].map((_, i) => (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, i) => (
               <div key={i} className="flex gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
                 <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-200" />
                 <div className="flex-1 space-y-2">
@@ -270,7 +288,7 @@ export default function Home() {
                 </div>
               </div>
             ))}
-            <p className="col-span-full text-center text-xs text-slate-400 pt-2 animate-pulse">
+            <p className="text-center text-xs text-slate-400 pt-2 animate-pulse">
               Collecting and summarizing articles...
             </p>
           </div>
@@ -318,13 +336,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* News list — 1 col on mobile, 2 col on desktop */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* News list — single column, priority order top to bottom */}
+            <div className="space-y-3">
               {filtered.map((item, i) => (
-                <NewsCard key={item.id} item={item} index={i} lang={lang} />
+                <NewsCard key={item.id} item={item} index={i} rank={i + 1} lang={lang} />
               ))}
               {filtered.length === 0 && (
-                <div className="col-span-full rounded-xl border border-slate-100 bg-white py-12 text-center text-sm text-slate-400 shadow-sm">
+                <div className="rounded-xl border border-slate-100 bg-white py-12 text-center text-sm text-slate-400 shadow-sm">
                   No articles match the current filters
                 </div>
               )}

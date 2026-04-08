@@ -7,6 +7,7 @@ import { NewsItem, Language } from '@/types';
 interface Props {
   item: NewsItem;
   index: number;
+  rank: number;
   lang: Language;
 }
 
@@ -38,7 +39,7 @@ function relativeTime(isoString: string, lang: Language): string {
   return rtf.format(diffDays, 'day');
 }
 
-export function NewsCard({ item, index, lang }: Props) {
+export function NewsCard({ item, index, rank, lang }: Props) {
   const [expanded, setExpanded] = useState(false);
   const style = scoreStyle(item.score);
 
@@ -47,8 +48,9 @@ export function NewsCard({ item, index, lang }: Props) {
       className="group flex gap-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition-all hover:border-slate-200 hover:shadow-md"
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* Score badge */}
+      {/* Rank + Score */}
       <div className="flex flex-col items-center gap-1 pt-0.5">
+        <span className="text-[10px] font-semibold text-slate-300">#{rank}</span>
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-bold ring-2 ${style.bg} ${style.text} ${style.ring}`}
         >
