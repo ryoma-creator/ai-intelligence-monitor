@@ -279,84 +279,43 @@ export default function Home() {
         {/* Results */}
         {news.length > 0 && !loading && (
           <>
-            {/* Summary + filters：枠を減らしタイポで階層を付ける */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              <div className="flex flex-col md:flex-row md:items-start md:gap-0">
-                <div className="min-w-0 flex-1 space-y-5 md:border-r md:border-slate-100 md:pr-8">
-                  <section>
-                    <h2 className="mb-3 text-sm font-semibold text-slate-800">{t.summaryHeading}</h2>
-                    <div className="flex gap-10 sm:gap-14">
-                      <div>
-                        <p className="text-3xl font-bold tabular-nums tracking-tight text-slate-900">
-                          {news.length}
-                        </p>
-                        <p className="mt-0.5 text-sm text-slate-600">{t.articles}</p>
-                      </div>
-                      <div>
-                        <p className="text-3xl font-bold tabular-nums tracking-tight text-rose-600">
-                          {highCount}
-                        </p>
-                        <p className="mt-0.5 text-sm text-slate-600">{t.highImpact}</p>
-                      </div>
-                    </div>
-                  </section>
+            {/* Stats + filters: compact single bar */}
+            <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                {/* Stats chips */}
+                <span className="text-xs text-slate-500">
+                  <span className="font-bold text-slate-900">{news.length}</span> {t.articles}
+                </span>
+                <span className="text-xs text-slate-500">
+                  <span className="font-bold text-rose-500">{highCount}</span> {t.highImpact}
+                </span>
+                <span className="text-xs text-slate-500">
+                  RSS <span className="font-bold text-blue-500">{rssCount}</span>
+                </span>
+                <span className="text-xs text-slate-500">
+                  HN <span className="font-bold text-orange-500">{hnCount}</span>
+                </span>
 
-                  <section className="border-t border-slate-100 pt-5">
-                    <h2 className="mb-3 text-sm font-semibold text-slate-800">{t.sourceBreakdown}</h2>
-                    <dl className="flex flex-wrap gap-x-10 gap-y-2 text-sm">
-                      <div className="flex items-baseline gap-3">
-                        <dt className="font-medium text-slate-700">{t.rss}</dt>
-                        <dd className="text-2xl font-bold tabular-nums text-blue-600">{rssCount}</dd>
-                      </div>
-                      <div className="flex items-baseline gap-3">
-                        <dt className="font-medium text-slate-700">{t.hn}</dt>
-                        <dd className="text-2xl font-bold tabular-nums text-orange-500">{hnCount}</dd>
-                      </div>
-                    </dl>
-                  </section>
+                <span className="hidden h-4 w-px bg-slate-200 sm:block" />
+
+                {/* Source filters */}
+                <div className="flex flex-wrap gap-1.5">
+                  <FilterBtn active={filterSource === 'all'} onClick={() => setFilterSource('all')}>{t.filterAllSources}</FilterBtn>
+                  <FilterBtn active={filterSource === 'rss'} onClick={() => setFilterSource('rss')}>{t.filterRss}</FilterBtn>
+                  <FilterBtn active={filterSource === 'hackernews'} onClick={() => setFilterSource('hackernews')}>{t.filterHn}</FilterBtn>
                 </div>
 
-                <section className="min-w-0 flex-1 border-t border-slate-100 pt-6 md:border-t-0 md:pl-8 md:pt-0">
-                  <h2 className="mb-4 text-sm font-semibold text-slate-800">{t.filterHeading}</h2>
-                  <div className="space-y-5">
-                    <div>
-                      <p className="mb-2.5 text-sm font-medium text-slate-700">{t.sourceLabel}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterBtn active={filterSource === 'all'} onClick={() => setFilterSource('all')}>
-                          {t.filterAllSources}
-                        </FilterBtn>
-                        <FilterBtn active={filterSource === 'rss'} onClick={() => setFilterSource('rss')}>
-                          {t.filterRss}
-                        </FilterBtn>
-                        <FilterBtn
-                          active={filterSource === 'hackernews'}
-                          onClick={() => setFilterSource('hackernews')}
-                        >
-                          {t.filterHn}
-                        </FilterBtn>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="mb-2.5 text-sm font-medium text-slate-700">{t.scoreLabel}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <FilterBtn active={filterScore === 'all'} onClick={() => setFilterScore('all')}>
-                          {t.filterAllScores}
-                        </FilterBtn>
-                        <FilterBtn active={filterScore === 'high'} onClick={() => setFilterScore('high')}>
-                          {t.filterHigh}
-                        </FilterBtn>
-                        <FilterBtn active={filterScore === 'mid'} onClick={() => setFilterScore('mid')}>
-                          {t.filterMid}
-                        </FilterBtn>
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              </div>
+                <span className="hidden h-4 w-px bg-slate-200 sm:block" />
 
-              <p className="mt-6 border-t border-slate-100 pt-3 text-sm text-slate-500">
-                {t.articlesShown(filtered.length)}
-              </p>
+                {/* Score filters */}
+                <div className="flex flex-wrap gap-1.5">
+                  <FilterBtn active={filterScore === 'all'} onClick={() => setFilterScore('all')}>{t.filterAllScores}</FilterBtn>
+                  <FilterBtn active={filterScore === 'high'} onClick={() => setFilterScore('high')}>{t.filterHigh}</FilterBtn>
+                  <FilterBtn active={filterScore === 'mid'} onClick={() => setFilterScore('mid')}>{t.filterMid}</FilterBtn>
+                </div>
+
+                <span className="ml-auto text-xs text-slate-400">{t.articlesShown(filtered.length)}</span>
+              </div>
             </div>
 
             {/* News list */}
